@@ -36,9 +36,10 @@ class RabbitMQObject(Base):
 
     __is_connecting = False
     __is_closing = False
+    _message = False
 
     def __init__(self, ampq_url=None, scheme=None, username=None, password=None, host=None, port=None, vhost=None,
-                 query=None, exchange=None, exchange_type=None, queue_name=None, routing_key=None):
+                 query=None, exchange=None, exchange_type=None, routing_key=None, consume_callback=None):
         if ampq_url is not None:
             self.url = ampq_url
             parse_result = urlparse(ampq_url)
@@ -61,8 +62,8 @@ class RabbitMQObject(Base):
 
         self.exchange = exchange
         self.exchange_type = exchange_type
-        self.queue_name = queue_name
         self.routing_key = routing_key
+        self.consume_callback = consume_callback
 
     def build_amqp_url(self):
         netloc = ''
@@ -131,6 +132,27 @@ class RabbitMQObject(Base):
             logger.info(exc_info)
             return False
         return True
+
+    def basic_consume(self, exchange=None, no_ack=True):
+        if not self.is_connected():
+            self.connect()
+        try:
+            if exchange is None:
+                exchange = self.exchange
+            result = self.__channel.queue_declare(exclusive=True)
+            queue_name = result.method.queue
+            self.__channel.queue_bind(exchange=exchange, queue=queue_name)
+            self.__channel.basic_consume(self.on_comsume, queue=queue_name, no_ack=no_ack)
+            self.__channel.start_consuming()
+        except:
+            exc_info = sys.exc_info()
+            logger.info(exc_info)
+
+    def on_comsume(self, ch, method, properties, body):
+        self.consume_callback(body)
+
+    def get_message(self):
+        return self._message
 
     def get_connection(self):
         return self.__connection
@@ -244,17 +266,3 @@ class RabbitMQObject(Base):
     port = property(fset=set_port, fget=get_port)
     vhost = property(fset=set_vhost, fget=get_vhost)
     query = property(fset=set_query, fget=get_query)
-
-
-if __name__ == "__main__":
-    obj = RabbitMQObject(
-        ampq_url='amqp://rabbitmq:rabbitmq@localhost/localhost',
-        # host='localhost',
-        exchange='logs',
-        exchange_type='fanout',
-        routing_key=''
-    )
-    message = 'Hello'
-    obj.connect()
-    print(obj.basic_publish(message=message))
-    obj.close()
