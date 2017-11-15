@@ -2,7 +2,7 @@
 import sys
 import logging
 import pika
-from backends.base import Base
+from pymqo.base import Base
 from urllib.parse import urlparse, ParseResult, parse_qsl, unquote, urlunparse, urlencode
 
 LOG_FORMAT = ('%(levelname) -10s %(asctime)s %(name) -30s %(funcName) -35s %(lineno) -5d: %(message)s')
