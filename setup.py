@@ -1,12 +1,12 @@
-from distutils.core import setup
+from setuptools import setup, find_packages
 from pymqo import __version__, __author__, __email__
 
 setup(
     name='pymqo',
     version=__version__,
-    packages=[
-        '',
-        'pymqo',
+    packages=find_packages(),
+    install_requires=[
+        'pika==0.11.0'
     ],
     url='https://github.com/ducminhgd/pymqo',
     license='',
