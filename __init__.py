@@ -1,0 +1,1 @@
+from backends.rabbit import RabbitMQObject as RabbitMQ
